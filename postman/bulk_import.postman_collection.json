@@ -1,0 +1,436 @@
+{
+  "info": {
+    "name": "CMS Bulk CSV Import API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run folder 1 first (Register, Login), then create categories (or `python manage.py seed_categories`), then import. In the Import requests, pick samples/sample_products.csv in the file field if Postman can't resolve the path."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "job_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"trainee\",\n  \"email\": \"t@example.com\",\n  \"password\": \"S3cure-Pass-123\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (saves access_token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/token/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "token",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"trainee\",\n  \"password\": \"S3cure-Pass-123\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('access_token', pm.response.json().access);",
+                  "pm.collectionVariables.set('refresh_token', pm.response.json().refresh);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/token/refresh/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "token",
+                "refresh",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('access_token', pm.response.json().access);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Categories",
+      "item": [
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categories/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Gadgets\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/categories/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Bulk import",
+      "item": [
+        {
+          "name": "Import CSV (insert only)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/import/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "import",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "samples/sample_products.csv"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('job_id', pm.response.json().id);",
+                  "pm.test('has counts', () => { const j = pm.response.json(); pm.expect(j).to.have.property('inserted_count'); pm.expect(j).to.have.property('failed_count'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Import CSV (update existing)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/import/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "import",
+                ""
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "samples/sample_products.csv"
+                },
+                {
+                  "key": "update_existing",
+                  "value": "true",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('job_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Import status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/imports/{{job_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "imports",
+                "{{job_id}}",
+                ""
+              ]
+            }
+          }
+        },
+        {
+          "name": "Import errors (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/imports/{{job_id}}/errors/?page=1&page_size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "imports",
+                "{{job_id}}",
+                "errors",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List import jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/imports/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "imports",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Products",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/?page=1&page_size=20&search=lap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "lap"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export products CSV (streamed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/export/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "export",
+                ""
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+sku,name,price,category,stock,is_active
+LAP-001,Laptop 14-inch,799.99,Electronics,25,true
+PHN-002,Smartphone X,499.00,Electronics,60,true
+BK-100,Learning Python,39.50,Books,120,true
+BK-101,Django for APIs,34.00,Books,80,true
+TSH-010,Cotton T-Shirt,12.99,Clothing,300,true
+JKT-011,Winter Jacket,89.90,Clothing,45,false
+LMP-020,Desk Lamp,19.25,Home,150,true
+TOY-030,Building Blocks Set,24.00,Toys,90,true
+BAD-001,Negative Price Item,-5.00,Books,10,true
+BAD-002,Unknown Category Item,10.00,Garden,10,true
+BAD-003,Price Not A Number,abc,Home,10,true
+BAD-004,,10.00,Home,10,true
+LAP-001,Duplicate Of Row 2,1.00,Electronics,1,true
+BAD-005,Bad stock,10.00,Toys,-3,true
+BAD-006,Too many decimals,10.999,Toys,3,true

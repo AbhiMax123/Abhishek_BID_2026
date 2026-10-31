@@ -1,0 +1,1027 @@
+openapi: 3.0.3
+info:
+  title: CMS Bulk CSV Import & Data Quality API
+  version: 1.0.0
+  description: Bulk product import/export with validation, job tracking and error
+    reports.
+paths:
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
+  /api/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/categories/:
+    get:
+      operationId: categories_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: categories_create
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/categories/{id}/:
+    get:
+      operationId: categories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: categories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: categories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - categories
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/imports/:
+    get:
+      operationId: imports_list
+      description: GET /api/imports/, /api/imports/{id}/, /api/imports/{id}/errors/
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - imports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedImportJobList'
+          description: ''
+  /api/imports/{id}/:
+    get:
+      operationId: imports_retrieve
+      description: GET /api/imports/, /api/imports/{id}/, /api/imports/{id}/errors/
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this import job.
+        required: true
+      tags:
+      - imports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+          description: ''
+  /api/imports/{id}/errors/:
+    get:
+      operationId: imports_errors_list
+      description: GET /api/imports/, /api/imports/{id}/, /api/imports/{id}/errors/
+      summary: Paginated list of failed rows
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this import job.
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - imports
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedImportErrorList'
+          description: ''
+  /api/products/:
+    get:
+      operationId: products_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Filter by category id
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Filter by active flag
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: sku, name, price, created_at (prefix - for descending)
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Search in SKU or name
+      tags:
+      - products
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
+    post:
+      operationId: products_create
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/products/{id}/:
+    get:
+      operationId: products_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - products
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    put:
+      operationId: products_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    patch:
+      operationId: products_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    delete:
+      operationId: products_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this product.
+        required: true
+      tags:
+      - products
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/products/export/:
+    get:
+      operationId: products_export_retrieve
+      description: GET /api/products/export/ - streams a CSV in bounded memory.
+      summary: Stream all products as CSV
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Filter by category id
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Filter by active flag
+      tags:
+      - products
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+          description: ''
+  /api/products/import/:
+    post:
+      operationId: products_import_create
+      description: POST /api/products/import/
+      summary: Bulk import products from a CSV file
+      tags:
+      - products
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+          description: ''
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+    CategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+      required:
+      - name
+    ImportError:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        row_number:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+          description: Line number in the CSV (header is line 1).
+        sku:
+          type: string
+          maxLength: 64
+        issues: {}
+        raw_data: {}
+      required:
+      - id
+      - row_number
+    ImportJob:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          readOnly: true
+        original_filename:
+          type: string
+          readOnly: true
+        file_size:
+          type: integer
+          readOnly: true
+        total_rows:
+          type: integer
+          readOnly: true
+        inserted_count:
+          type: integer
+          readOnly: true
+        updated_count:
+          type: integer
+          readOnly: true
+        failed_count:
+          type: integer
+          readOnly: true
+        failure_reason:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        duration_seconds:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        errors_url:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - duration_seconds
+      - errors_url
+      - failed_count
+      - failure_reason
+      - file_size
+      - finished_at
+      - id
+      - inserted_count
+      - mode
+      - original_filename
+      - started_at
+      - status
+      - total_rows
+      - updated_count
+    ImportUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: 'CSV file, UTF-8, max 5 MB. Columns: sku,name,price,category[,stock,is_active]'
+        update_existing:
+          type: boolean
+          default: false
+          description: If true, rows whose SKU already exists update that product
+            instead of failing.
+      required:
+      - file
+    ModeEnum:
+      enum:
+      - insert_only
+      - update_existing
+      type: string
+      description: |-
+        * `insert_only` - Insert only
+        * `update_existing` - Update existing
+    PaginatedCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        total_pages:
+          type: integer
+          example: 7
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedImportErrorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        total_pages:
+          type: integer
+          example: 7
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportError'
+    PaginatedImportJobList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        total_pages:
+          type: integer
+          example: 7
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportJob'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        total_pages:
+          type: integer
+          example: 7
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        next:
+          type: string
+          nullable: true
+          format: uri
+        previous:
+          type: string
+          nullable: true
+          format: uri
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PatchedCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+    PatchedProductRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+        is_active:
+          type: boolean
+        category:
+          type: integer
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sku:
+          type: string
+          maxLength: 64
+        name:
+          type: string
+          maxLength: 255
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+        is_active:
+          type: boolean
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - category_name
+      - created_at
+      - id
+      - name
+      - price
+      - sku
+      - updated_at
+    ProductRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+        is_active:
+          type: boolean
+        category:
+          type: integer
+      required:
+      - category
+      - name
+      - price
+      - sku
+    Register:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+      required:
+      - id
+      - username
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Email address
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - password
+      - username
+    StatusEnum:
+      enum:
+      - pending
+      - processing
+      - completed
+      - completed_with_errors
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `processing` - Processing
+        * `completed` - Completed
+        * `completed_with_errors` - Completed with errors
+        * `failed` - Failed
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
